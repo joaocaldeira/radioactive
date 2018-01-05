@@ -6,7 +6,7 @@
 # AUTHOR:   Joao Caldeira
 ##############################################################################
 
-import radioactive2 as ra
+import radioactive as ra
 import numpy as np
 
 events=ra.source_compton(act=10.,Tf=2000.,axis=[1.,0,0],posn=[-20.,0,0],cone=np.pi/60.,isotope="Cs137") 
