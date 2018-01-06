@@ -12,6 +12,7 @@ import random
 import math
 from scipy import loadtxt
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 #@profile
 def random_vector(dirz=2*random.random()-1):
@@ -26,6 +27,7 @@ def source(act=1,Tf=1,axis=[0,0,1],cone=np.pi,posn=np.array([0,0,0]),isotope="Na
     #Tf is the total real time the source is allowed to emit gamma rays
     r=3.7e4*act #conversion from microCi to decays per second
     posn=np.asarray(posn)
+    tqdm.write(' ') #prevents first print colliding with progress bars
     
     #program takes a list of produced gammas, along with probabilities
     #on each row, first element is probability, second is energies, third is mode
@@ -41,7 +43,7 @@ def source(act=1,Tf=1,axis=[0,0,1],cone=np.pi,posn=np.array([0,0,0]),isotope="Na
                                     [.0329,.138326,0],[.562,1.0973,0],[.155,2.1121,0],
                                     [.115,.8187,0],[.844,1.29354,0]]
     else:
-        print "Isotope not recognised! Using Na22."
+        tqdm.write("Isotope not recognised! Using Na22.")
         possible=[[1.,.511,1],[1.,1.2745,0]]
 
     # Generate a list of all decay events from t=0 to t=t_f
@@ -75,7 +77,8 @@ def source(act=1,Tf=1,axis=[0,0,1],cone=np.pi,posn=np.array([0,0,0]),isotope="Na
     #if there is a specific cone angle selected, only gamma rays making an angle of
     #less than that angle will be accepted into the events array.
     cos=math.cos(cone)
-    for i in range(len(t)):
+    
+    for i in tqdm(range(len(t)), desc='source progress'):
         for j in range(len(possible)):
             #we draw events from the possible array according to their different
             #probabilities.
@@ -110,13 +113,14 @@ def source_compton(act=1,Tf=1,axis=[0,0,1],cone=np.pi/18.,posn=np.array([0,0,0])
     #would make timing data wrong. For this reason, we use only Cs137 here.
     
     posn=np.asarray(posn)
+    tqdm.write(' ') #prevents first print colliding with progress bars
     
     #program takes a list of produced gammas, along with probabilities
     #on each row, first element is probability, second is energies, third is mode
     #mode: 1 if pair production
     if isotope=="Cs137": possible=[[.851,.6616,0]]
     else:
-        print "Isotope not recognised! Using Cs137."
+        tqdm.write("Isotope not recognised! Using Cs137.")
         possible=[[.851,.6616,0]]
 
     # Generate a list of all decay events from t=0 to t=t_f
@@ -148,7 +152,7 @@ def source_compton(act=1,Tf=1,axis=[0,0,1],cone=np.pi/18.,posn=np.array([0,0,0])
         rotinv=rot
         
     cos=math.cos(cone)
-    for i in range(len(t)):
+    for i in tqdm(range(len(t)), desc='source progress'):
         #here we call random_vector with an argument such that the vector
         #is inside the selected cone.
         events.append([t[i],possible[0][1],posn,np.dot(rotinv,random_vector(random.random()*(1-cos)+cos))])
@@ -208,7 +212,7 @@ def cross_sections(en,xen,twocs,phel,incsc):
         #pp=pptt[0]
         pe=phel[0]
         comp=incsc[0]
-        print 'Warning: Energy is lower than the lowest value on the table provided.'
+        tqdm.write('Warning: Energy is lower than the lowest value on the table provided.')
     else: #for values not on table, interpolate linearly
         frac=(en-xen[j-1])/(xen[j]-xen[j-1])
         cross=twocs[j-1]+frac*(twocs[j]-twocs[j-1])
@@ -291,7 +295,7 @@ def scatterer(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
                     eventsin=[[0,.511,[0,0,0],[0,0,1]]],material="Al",rho=1):
     scatterergeom=[solid,center,axis,radius,length]
     if solid != "cylinder":
-        print "This geometry is not supported!"
+        tqdm.write("This geometry is not supported!")
     sc=np.array(scatterergeom[1]) #note: later we will transform coord so that dc=[0,0,0]; this
                         #is relative to lab frame
     sa=np.array(scatterergeom[2])
@@ -306,9 +310,9 @@ def scatterer(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
     if material=="Al": rho=2.70 # Al density, in g/cm^3
     elif material=="Pb": rho=11.34 # Pb density, in g/cm^3
     elif rho==1:
-        print "The program does not have data for the density of the scatterer."
-        print "Using density of 1 g/cm^3."
-        print "Please input density as 'rho=?' when calling the function."
+        tqdm.write("The program does not have data for the density of the scatterer.")
+        tqdm.write("Using density of 1 g/cm^3.")
+        tqdm.write("Please input density as 'rho=?' when calling the function.")
     
     #now rotate coordinates so the axis of the scatterer is along the z axis
     #here we find the necessary transformation
@@ -334,7 +338,7 @@ def scatterer(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
         
     eventsout=[]
     
-    for i in range(len(eventsin)):
+    for i in tqdm(range(len(eventsin)), desc='scatterer progress'):
         #for each ray in the list eventsin, we will work out what rays come
         #out of the scatterer
         liverays=[eventsin[i]]
@@ -402,7 +406,7 @@ def detector(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
                     eventsin=[[0,.511,[0,0,0],[0,0,1]]],material="NaI",rho=1):
     detectorgeom=[solid,center,axis,radius,length] #for a cylinder: center pos, axis, radius, length
     if solid != "cylinder":
-        print "This geometry is not supported!"
+        tqdm.write("This geometry is not supported!")
     dc=np.array(detectorgeom[1]) #note: later we will transform coord so that dc=[0,0,0]; this
                         #is relative to source center
     da=np.array(detectorgeom[2])
@@ -421,9 +425,9 @@ def detector(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
         rho=5.32
         sigma0=5.92e-4 #FWHM of 0.14% at 662 keV
     elif rho==1:
-        print "The program does not have data for the density or FWHM of the detector material."
-        print "Using density of 1 g/cm^3."
-        print "Please input density as 'rho=?' when calling the detector function."
+        tqdm.write("The program does not have data for the density or FWHM of the detector material.")
+        tqdm.write("Using density of 1 g/cm^3.")
+        tqdm.write("Please input density as 'rho=?' when calling the detector function.")
     
     #now rotate coordinates so the axis of the detector is along the z axis
     #here we find the necessary transformation
@@ -448,7 +452,7 @@ def detector(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
     detected=[]
     
     #now we are ready to see how much energy each particle leaves in the detector!
-    for i in range(len(eventsin)):
+    for i in tqdm(range(len(eventsin)), desc='detector progress'):
         #for each ray in the list events, we will work out how much energy
         #is absorbed by the detector
         dumpen=0
@@ -516,6 +520,6 @@ def detector(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
         plt.hist(detected,bins=512)
         plt.show()
     except IndexError:
-        print 'No gamma rays detected! Consider changing the geometry or increasing Tf.'
+        tqdm.write('No gamma rays detected! Consider changing the geometry or increasing Tf.')
     
     return detected
