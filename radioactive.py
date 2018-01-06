@@ -518,6 +518,9 @@ def detector(solid="cylinder",center=[0,0,5],axis=[0,0,1],radius=1,length=1,
         
     try:
         plt.hist(detected,bins=512)
+        plt.xlabel('Energy (MeV)')
+        plt.ylabel('Counts')
+        plt.title('Detected gamma rays')
         plt.show()
     except IndexError:
         tqdm.write('No gamma rays detected! Consider changing the geometry or increasing Tf.')
